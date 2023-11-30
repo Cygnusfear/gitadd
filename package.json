@@ -3,7 +3,8 @@
   "module": "gitadd.js",
   "type": "module",
   "scripts": {
-    "dev":"bun gitadd.js"
+    "dev":"bun gitadd.js",
+    "build":"bun build ./gitadd.js --compile --outfile ./dist/gitadd"
   },
   "devDependencies": {
     "bun-types": "latest"
