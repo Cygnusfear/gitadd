@@ -3,7 +3,6 @@
 import { spawn } from 'bun';
 import inquirer from 'inquirer';
 import kleur from 'kleur';
-import process from 'process';
 
 async function runGitCommand(args) {
   const proc = spawn(['git', ...args]);
@@ -87,6 +86,7 @@ async function toggleFiles(files) {
     name: 'filesToToggle',
     message: 'Select for staging:',
     choices,
+    prefix: "🏗️ ",
     loop: false
   }]);
 
