@@ -1,91 +1,132 @@
 #!/usr/bin/env bun
 
 import { spawn } from 'bun';
+import inquirer from 'inquirer';
+import kleur from 'kleur';
+import process from 'process';
 
-// Function to parse the output of `git status --porcelain`
+async function runGitCommand(args) {
+  const proc = spawn(['git', ...args]);
+  const output = await new Response(proc.stdout).text();
+  return output;
+}
+
+async function outputGitCommand(args) {
+  const proc = spawn(['git', ...args]);
+  const output = await new Response(proc.stdout);
+  return output;
+}
+
 function parseGitStatus(output) {
   return output.split('\n')
-    .filter(line => line && (line.startsWith('??') || line.startsWith(' M')))
-    .map(line => line.slice(3));
-}
-
-// Function to run a git command and return its output
-async function runGitCommand(args) {
-  const { stdout, stderr, exitCode } = await spawn(['git', ...args]);
-
-  if (exitCode !== 0) {
-    throw new Error(stderr);
-  }
-
-  return stdout.trim();
-}
-
-// Function to toggle files to stage
-async function toggleFiles(files) {
-  const toggledFiles = new Set();
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-
-  console.log('Toggle files to stage using the spacebar, then press Enter:\n');
-
-  for (let i = 0; i < files.length; i++) {
-    console.log(`[ ] ${files[i]}`);
-  }
-
-  rl.on('line', (line) => {
-    const index = parseInt(line, 10);
-    if (!isNaN(index) && index >= 0 && index < files.length) {
-      if (toggledFiles.has(index)) {
-        toggledFiles.delete(index);
-      } else {
-        toggledFiles.add(index);
+    .filter(line => line)
+    .map(line => {
+      const rawStatus = line.substr(0, 2);
+      const filename = line.substr(3);
+      let stagingStatus = 'unstaged';
+      let gitStatus = '';
+      // Parse the raw status
+      switch (rawStatus) {
+        case 'M ':
+        case 'A ':
+        case 'D ':
+        case 'R ':
+        case 'C ':
+          stagingStatus = 'staged'; // Staged changes
+          break;
+        case ' M':
+        case 'MM':
+          case 'AM':
+            case 'RM':
+          gitStatus = 'modified';
+          stagingStatus = 'unstaged'; // Unstaged changes or untracked files
+          break;
+        case '??':
+        case '!!':
+          gitStatus = 'untracked';
+          stagingStatus = 'unstaged'; // Unstaged changes or untracked files
+          break;
+        case 'UU':
+          stagingStatus = 'unmerged'; // Unmerged changes due to conflicts
+          break;
+        default:
+          stagingStatus = 'other'; // Other statuses not specifically accounted for
+          break;
       }
-    }
+      // console.log(`[${rawStatus}] ${filename} => ${status}`)
 
-    console.clear();
-    for (let i = 0; i < files.length; i++) {
-      console.log(`${toggledFiles.has(i) ? '[x]' : '[ ]'} ${files[i]}`);
-    }
-  });
+      // Apply color-coding
+      let displayStatus = `[${rawStatus}]`;
+      if (stagingStatus === 'staged') {
+        displayStatus = kleur.green(displayStatus);
+      } else if (stagingStatus === 'unstaged') {
+        displayStatus = kleur.red(displayStatus);
+      }
 
-  return new Promise((resolve) => {
-    rl.on('close', () => {
-      resolve(Array.from(toggledFiles).map(index => files[index]));
+      return {
+        filename,
+        displayStatus,
+        rawStatus,
+        status: stagingStatus,
+        gitStatus: gitStatus,
+        selected: stagingStatus == 'staged'
+      };
     });
-  });
 }
 
-// Main function to check for unstaged files and handle toggling
+async function toggleFiles(files) {
+  let choices = files.map(file => ({
+    name: ` ${file.displayStatus} ${file.filename} (${file.status})`,
+    value: file.filename,
+    checked: file.selected
+  }));
+
+  const prompt = inquirer.createPromptModule();
+  const answers = await prompt([{
+    type: 'checkbox',
+    name: 'filesToToggle',
+    message: 'Select for staging:',
+    choices,
+    loop: false
+  }]);
+
+  const output = files.map(file => ({
+    ...file,
+    selected: answers.filesToToggle.includes(file.filename)
+  }));
+  // console.log(output);
+  return output;
+}
+
 async function main() {
+  // if process has argv we forward everything to git
+
   try {
-    // Check if we are in a git repository
-    await runGitCommand(['rev-parse', '--is-inside-work-tree']);
-
-    // Get the list of unstaged files
-    const statusOutput = await runGitCommand(['status', '--porcelain']);
-    console.log(statusOutput)
-    const unstagedFiles = parseGitStatus(statusOutput);
-
-    if (unstagedFiles.length === 0) {
-      console.log('There are no unstaged files.');
+    const isGit = await runGitCommand(['rev-parse', '--is-inside-work-tree']);
+    if (isGit.trim() !== 'true') {
+      console.log('❌ This is not a git repository.');
       return;
     }
+    const statusOutput = await runGitCommand(['status', '--porcelain']);
+    const filesWithStatus = parseGitStatus(statusOutput);
 
-    // Ask the user to toggle files to stage
-    const filesToStage = await toggleFiles(unstagedFiles);
-
-    // Stage the selected files
-    for (const file of filesToStage) {
-      await runGitCommand(['add', file]);
+    if (filesWithStatus.length === 0) {
+      console.log('✅ There are no files to stage or unstage.');
+      return;
     }
+    const filesToToggle = await toggleFiles(filesWithStatus);
 
-    console.log('Selected files have been staged.');
+  for (const file of filesToToggle) {
+    if (file.selected && file.status !== 'staged') {
+      await runGitCommand(['add', file.filename]);
+    } else if (!file.selected) {
+      await runGitCommand(['restore', '--staged', file.filename]);
+    }
+  }
+  // process.await outputGitCommand(["status"]);
   } catch (error) {
     console.error('Error:', error);
   }
 }
 
-// Run the main function
 main();
