@@ -3,13 +3,18 @@
   "module": "gitadd.js",
   "type": "module",
   "scripts": {
-    "dev":"bun gitadd.js",
-    "build":"bun build ./gitadd.js --compile --outfile ./dist/gitadd"
+    "dev": "bun gitadd.js",
+    "build": "bun build ./gitadd.js --compile --outfile ./dist/gitadd"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.4.0",
     "bun-types": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "kleur": "^4.1.5",
+    "prompts": "^2.4.2"
   }
 }
