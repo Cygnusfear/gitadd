@@ -1,6 +1,6 @@
 # ➕💝 gitadd
 
-Handy little CLI tool for quick interactive GIT staging
+Happy little CLI tool for quick interactive GIT staging
 
 ![Example Image](demo.gif)
 

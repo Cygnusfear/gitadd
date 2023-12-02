@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
-import { spawn } from "bun";
-import checkbox, { Item } from "./gitadd-checkbox";
-import kleur from "kleur";
 import ansiEscapes from "ansi-escapes";
+import { spawn } from "bun";
+import kleur from "kleur";
+import checkbox, { Item } from "./gitadd-checkbox";
 
 interface FileStatus {
 	filename: string;
