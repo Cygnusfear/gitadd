@@ -42,6 +42,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/
+        asset_path: ./dist/gitadd
         asset_name: gitadd
         asset_content_type: application/octet-stream
