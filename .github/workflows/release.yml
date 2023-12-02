@@ -22,6 +22,9 @@ jobs:
     - name: Install dependencies
       run: bun i
 
+    - name: Build project
+      run: bun run build
+
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -39,6 +42,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/gitadd
+        asset_path: ./dist/
         asset_name: gitadd
         asset_content_type: application/octet-stream
