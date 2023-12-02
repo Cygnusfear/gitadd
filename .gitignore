@@ -176,3 +176,6 @@ dist
 
 # Dist
 dist
+
+# Demo stuff
+.demo*
