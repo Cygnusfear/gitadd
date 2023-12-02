@@ -69,11 +69,11 @@ function renderItem<Value>({
 	}
 
 	const checkbox = item.checked
-		? ` ${kleur.green("✅")} `
-		: ` ${kleur.grey(figures.checkboxOff)} `;
+		? ` ${kleur.green("✅")}`
+		: ` ${kleur.grey(figures.checkboxOff)}`;
 	const color = isActive ? kleur.cyan : (x: string) => x;
 	const prefix = isActive ? figures.pointer : " ";
-	return color(`${prefix}${checkbox} ${line}`);
+	return color(`${prefix}${checkbox}  ${line}`);
 }
 
 export default createPrompt(

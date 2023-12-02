@@ -141,6 +141,7 @@ async function toggleFiles(files: FileStatus[]): Promise<FileStatus[]> {
 
 	const response = await checkbox({
 		message: "Select for staging:",
+		prefix: "➕💝 ",
 		choices,
 		loop: false,
 		pageSize: 20,
